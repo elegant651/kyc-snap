@@ -148,7 +148,7 @@ const Index = () => {
           />
         )} */}
         
-        {!state.installedSnap && (
+        
           <Card
             content={{
               title: 'ConnectAA',
@@ -163,7 +163,7 @@ const Index = () => {
             }}
             disabled={!state.isFlask}
           />
-        )}
+        
 
         {eoaAddress && addressAA && (
           <div>
