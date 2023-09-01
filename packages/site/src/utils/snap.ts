@@ -92,7 +92,7 @@ export const setSubscribe = async () => {
 };
 
 export const subscribe = async () => {
-  window.location.href = 'https://social-security-snap-landing.vercel.app/';
+  window.location.href = process.env.SNAP_ORIGIN || '';
 };
 
 export const connectEOA = async (): Promise<string> => {

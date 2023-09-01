@@ -20,6 +20,17 @@ export const getAddressAA = async (): Promise<string> => {
   return address;
 };
 
+const verifyWorldIdToken = async (token: string) => {
+  const response = await fetch(`${process.env.HOST_URI}/api/worldcoin/auth?token=${token}`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.result;
+};
+
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
  *
@@ -68,25 +79,44 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ origin, request }) => 
 };
 
 // Handle outgoing transactions.
-export const onTransaction: OnTransactionHandler = async ({ transaction }) => {
-  if (typeof transaction.data === 'string' && transaction.data !== '0x') {
+export const onTransaction: OnTransactionHandler = async ({ chainId, transaction }) => {
+  const data = await snap.request({
+    method: 'snap_manageState',
+    params: { operation: 'get' },
+  });
+
+  if (!data) {
     return {
       content: panel([
-        heading('Percent Snap'),
-        text(
-          'This snap only provides transaction insights for simple ETH transfers.',
-        ),
+        heading('KYC authentication is required!!'),
+        text('In order to execute the transaction, KYC authentication must be performed first.'),
       ]),
     };
+  }
+
+  const verifiedWorldId = await verifyWorldIdToken(data.worldId as string);
+  if (!verifiedWorldId) {
+    return {
+      content: panel([
+        heading('KYC authentication is required!!'),
+        text('In order to execute the transaction, KYC authentication must be performed first.'),
+      ]),
+    };
+  }
+
+  const walletAddress = transaction.from?.toString();
+  const toAddress = transaction.to?.toString();
+  const inputData = transaction.data?.toString();
+
+  if (!walletAddress || !toAddress || !inputData || !chainId) {
+    throw new Error('Missing required parameters');
   }
 
   // Display percentage of gas fees in the transaction insights UI.
   return {
     content: panel([
-      heading('Transaction insights snap'),
-      text(
-        `for this transaction.`,
-      ),
+      heading('Verified with KYC-Snap!!'),
+      text(verifiedWorldId.sub),
     ]),
   };
 };
